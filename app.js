@@ -3,9 +3,9 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const session = require('express-session') // Importo express-session
 
-
-var indexRouter = require('./routes/index');
+/* var indexRouter = require('./routes/index'); */
 var usersRouter = require('./routes/users');
 var contactRouter = require('./routes/contact')
 var pageNotAvailableRouter = require('./routes/pageNotAvailable')
@@ -23,11 +23,41 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+app.use(session({                   //Inicializo express-session
+  secret: "NoSeQuePonerPeroTieneQueSerAlgoLargo",
+  resave: false,
+  saveUninitialized: true
+}))
+
+/* app.use('/', indexRouter); */
 app.use('/users', usersRouter);
 app.use('/contact', contactRouter);
 app.use('/pageNotAvailable', pageNotAvailableRouter);
 app.use('/products', productsRouter)
+
+
+app.get('/', (req, res) => {
+  const usuario = Boolean(req.session.nombre)
+  res.render('index', {
+    title: 'Completa el formulario',
+    usuario: usuario,
+    nombre: req.session.nombre
+  })
+})
+
+
+app.post('/ingresar', (req, res) => {
+  if(req.body.nombre) {
+    req.session.nombre = req.body.nombre
+  }
+  res.redirect('/')
+})
+
+app.get('/salir', (req, res) => {
+  req.session.destroy(),
+  res.redirect('/')
+})
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
